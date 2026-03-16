@@ -43,6 +43,7 @@ class _WallboardPageState extends State<WallboardPage> {
   bool _loading = false;
   bool _showControls = true;
   String? _error;
+  bool _isClosing = false;
 
   static const Duration _controlsVisibleDuration = Duration(seconds: 4);
 
@@ -73,7 +74,12 @@ class _WallboardPageState extends State<WallboardPage> {
     _refreshTimer?.cancel();
     _repaintTimer?.cancel();
     _controlsTimer?.cancel();
-    _restoreDisplayMode();
+
+    // Best-effort fallback in case the route is removed unexpectedly.
+    if (!_isClosing) {
+      _restoreDisplayMode();
+    }
+
     super.dispose();
   }
 
@@ -101,6 +107,26 @@ class _WallboardPageState extends State<WallboardPage> {
     await WakelockPlus.disable();
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     await SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+  }
+
+  Future<void> _closeWallboard() async {
+    if (_isClosing) return;
+    _isClosing = true;
+
+    _refreshTimer?.cancel();
+    _repaintTimer?.cancel();
+    _controlsTimer?.cancel();
+
+    setState(() {
+      _fullscreen = false;
+      _kioskMode = false;
+      _showControls = true;
+    });
+
+    await _restoreDisplayMode();
+
+    if (!mounted) return;
+    Navigator.of(context).pop();
   }
 
   void _scheduleControlsHide() {
@@ -299,6 +325,12 @@ class _WallboardPageState extends State<WallboardPage> {
 
     return PopScope(
       canPop: !_kioskMode,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        if (!_kioskMode) {
+          await _closeWallboard();
+        }
+      },
       child: Scaffold(
         backgroundColor: Colors.black,
         body: GestureDetector(
@@ -383,7 +415,7 @@ class _WallboardPageState extends State<WallboardPage> {
                             if (!_kioskMode)
                               IconButton.filledTonal(
                                 tooltip: 'Close',
-                                onPressed: () => Navigator.of(context).pop(),
+                                onPressed: _closeWallboard,
                                 icon: const Icon(Icons.close),
                               ),
                           ],

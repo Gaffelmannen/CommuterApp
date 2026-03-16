@@ -25,7 +25,7 @@ class WallboardView extends StatelessWidget {
     final grouped = _buildGroups(sortedDepartures);
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
-    final nextConnection = _nextUpcomingDeparture(
+    final nextConnection = _nextReachableDeparture(
       sortedDepartures,
       walkMinutes,
     );
@@ -81,8 +81,16 @@ class WallboardView extends StatelessWidget {
                       ),
                     )
                   : isLandscape
-                      ? _LandscapeGroups(groups: grouped)
-                      : _PortraitGroups(groups: grouped),
+                      ? _LandscapeGroups(
+                          groups: grouped,
+                          walkMinutes: walkMinutes,
+                          showLeaveState: showLeaveBanner,
+                        )
+                      : _PortraitGroups(
+                          groups: grouped,
+                          walkMinutes: walkMinutes,
+                          showLeaveState: showLeaveBanner,
+                        ),
             ),
           ],
         ),
@@ -90,29 +98,26 @@ class WallboardView extends StatelessWidget {
     );
   }
 
-  DepartureResult? _nextUpcomingDeparture(
+  DepartureResult? _nextReachableDeparture(
     List<DepartureResult> source,
     int walkMinutes,
   ) {
     final now = DateTime.now();
-    DepartureResult? fallbackFutureDeparture;
 
     for (final departure in source) {
       final departureTime = departure.expectedTime ?? departure.scheduledTime;
       if (departureTime == null) continue;
       if (!departureTime.isAfter(now)) continue;
 
-      fallbackFutureDeparture ??= departure;
-
       final leaveByTime =
           departureTime.subtract(Duration(minutes: walkMinutes));
 
-      if (leaveByTime.isAfter(now) || leaveByTime.isAtSameMomentAs(now)) {
+      if (!leaveByTime.isBefore(now)) {
         return departure;
       }
     }
 
-    return fallbackFutureDeparture;
+    return null;
   }
 
   List<_WallboardGroup> _buildGroups(List<DepartureResult> source) {
@@ -227,7 +232,24 @@ class _LeaveBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (departure == null) {
-      return const SizedBox.shrink();
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.redAccent.withOpacity(0.18),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.redAccent),
+        ),
+        child: const Text(
+          'No reachable departures with current walking time',
+          style: TextStyle(
+            color: Colors.redAccent,
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      );
     }
 
     final departureTime = departure!.expectedTime ?? departure!.scheduledTime;
@@ -337,9 +359,13 @@ class _WallboardGroup {
 class _PortraitGroups extends StatelessWidget {
   const _PortraitGroups({
     required this.groups,
+    required this.walkMinutes,
+    required this.showLeaveState,
   });
 
   final List<_WallboardGroup> groups;
+  final int walkMinutes;
+  final bool showLeaveState;
 
   @override
   Widget build(BuildContext context) {
@@ -349,7 +375,11 @@ class _PortraitGroups extends StatelessWidget {
           .map(
             (group) => Padding(
               padding: const EdgeInsets.only(bottom: 24),
-              child: _WallboardSection(group: group),
+              child: _WallboardSection(
+                group: group,
+                walkMinutes: walkMinutes,
+                showLeaveState: showLeaveState,
+              ),
             ),
           )
           .toList(),
@@ -360,9 +390,13 @@ class _PortraitGroups extends StatelessWidget {
 class _LandscapeGroups extends StatelessWidget {
   const _LandscapeGroups({
     required this.groups,
+    required this.walkMinutes,
+    required this.showLeaveState,
   });
 
   final List<_WallboardGroup> groups;
+  final int walkMinutes;
+  final bool showLeaveState;
 
   @override
   Widget build(BuildContext context) {
@@ -388,7 +422,11 @@ class _LandscapeGroups extends StatelessWidget {
                   .map(
                     (group) => Padding(
                       padding: const EdgeInsets.only(bottom: 24),
-                      child: _WallboardSection(group: group),
+                      child: _WallboardSection(
+                        group: group,
+                        walkMinutes: walkMinutes,
+                        showLeaveState: showLeaveState,
+                      ),
                     ),
                   )
                   .toList(),
@@ -401,7 +439,11 @@ class _LandscapeGroups extends StatelessWidget {
                   .map(
                     (group) => Padding(
                       padding: const EdgeInsets.only(bottom: 24),
-                      child: _WallboardSection(group: group),
+                      child: _WallboardSection(
+                        group: group,
+                        walkMinutes: walkMinutes,
+                        showLeaveState: showLeaveState,
+                      ),
                     ),
                   )
                   .toList(),
@@ -416,9 +458,13 @@ class _LandscapeGroups extends StatelessWidget {
 class _WallboardSection extends StatelessWidget {
   const _WallboardSection({
     required this.group,
+    required this.walkMinutes,
+    required this.showLeaveState,
   });
 
   final _WallboardGroup group;
+  final int walkMinutes;
+  final bool showLeaveState;
 
   @override
   Widget build(BuildContext context) {
@@ -442,6 +488,8 @@ class _WallboardSection extends StatelessWidget {
             child: _WallboardRow(
               departure: departure,
               isPrimary: index == 0,
+              walkMinutes: walkMinutes,
+              showLeaveState: showLeaveState,
             ),
           );
         }),
@@ -454,10 +502,14 @@ class _WallboardRow extends StatelessWidget {
   const _WallboardRow({
     required this.departure,
     required this.isPrimary,
+    required this.walkMinutes,
+    required this.showLeaveState,
   });
 
   final DepartureResult departure;
   final bool isPrimary;
+  final int walkMinutes;
+  final bool showLeaveState;
 
   @override
   Widget build(BuildContext context) {
@@ -470,56 +522,74 @@ class _WallboardRow extends StatelessWidget {
         planned != null && estimated != null && estimated.isAfter(planned);
     final comparisonTime = estimated ?? planned;
 
-    final borderColor =
-        isPrimary ? const Color(0xFFFFD54F) : Colors.white12;
+    final reachable = _isReachable(departure, walkMinutes);
+    final dimmed = showLeaveState && !reachable;
+
+    final borderColor = isPrimary
+        ? const Color(0xFFFFD54F)
+        : Colors.white12;
     final backgroundColor =
         isPrimary ? const Color(0xFF151515) : const Color(0xFF111111);
 
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isPrimary ? 22 : 20,
-        vertical: isPrimary ? 20 : 16,
-      ),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: borderColor,
-          width: isPrimary ? 2 : 1,
+    return Opacity(
+      opacity: dimmed ? 0.38 : 1,
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: isPrimary ? 22 : 20,
+          vertical: isPrimary ? 20 : 16,
+        ),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: dimmed ? Colors.white24 : borderColor,
+            width: isPrimary ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _LineBadge(
+              line: departure.line,
+              isPrimary: isPrimary,
+              isLandscape: isLandscape,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              flex: 7,
+              child: _DestinationBlock(
+                departure: departure,
+                isPrimary: isPrimary,
+                isLandscape: isLandscape,
+                showTooLate: dimmed,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Flexible(
+              flex: 3,
+              child: _TimeBlock(
+                planned: planned,
+                estimated: estimated,
+                comparisonTime: comparisonTime,
+                delayed: delayed,
+                isPrimary: isPrimary,
+                isLandscape: isLandscape,
+              ),
+            ),
+          ],
         ),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          _LineBadge(
-            line: departure.line,
-            isPrimary: isPrimary,
-            isLandscape: isLandscape,
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            flex: 7,
-            child: _DestinationBlock(
-              departure: departure,
-              isPrimary: isPrimary,
-              isLandscape: isLandscape,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Flexible(
-            flex: 3,
-            child: _TimeBlock(
-              planned: planned,
-              estimated: estimated,
-              comparisonTime: comparisonTime,
-              delayed: delayed,
-              isPrimary: isPrimary,
-              isLandscape: isLandscape,
-            ),
-          ),
-        ],
-      ),
     );
+  }
+
+  static bool _isReachable(DepartureResult departure, int walkMinutes) {
+    final departureTime = departure.expectedTime ?? departure.scheduledTime;
+    if (departureTime == null) return false;
+
+    final leaveByTime =
+        departureTime.subtract(Duration(minutes: walkMinutes));
+    final now = DateTime.now();
+    return !leaveByTime.isBefore(now);
   }
 }
 
@@ -567,11 +637,13 @@ class _DestinationBlock extends StatelessWidget {
     required this.departure,
     required this.isPrimary,
     required this.isLandscape,
+    required this.showTooLate,
   });
 
   final DepartureResult departure;
   final bool isPrimary;
   final bool isLandscape;
+  final bool showTooLate;
 
   @override
   Widget build(BuildContext context) {
@@ -602,16 +674,42 @@ class _DestinationBlock extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        Text(
-          subtitle,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: Colors.white70,
-            fontSize: isPrimary
-                ? (isLandscape ? 14 : 18)
-                : (isLandscape ? 13 : 16),
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: isPrimary
+                      ? (isLandscape ? 14 : 18)
+                      : (isLandscape ? 13 : 16),
+                ),
+              ),
+            ),
+            if (showTooLate) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.redAccent.withOpacity(0.20),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: Colors.redAccent),
+                ),
+                child: const Text(
+                  'Too late',
+                  style: TextStyle(
+                    color: Colors.redAccent,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
       ],
     );
