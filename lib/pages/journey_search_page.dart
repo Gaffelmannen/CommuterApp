@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/journey_result.dart';
 import '../services/sl_journey_service.dart';
 import '../widgets/journey_card.dart';
@@ -28,6 +29,8 @@ class _JourneySearchPageState extends State<JourneySearchPage> {
   }
 
   Future<void> _searchJourneys() async {
+    final l10n = AppLocalizations.of(context)!;
+
     FocusScope.of(context).unfocus();
 
     final originName = _originController.text.trim();
@@ -35,7 +38,7 @@ class _JourneySearchPageState extends State<JourneySearchPage> {
 
     if (originName.isEmpty || destinationName.isEmpty) {
       setState(() {
-        _error = 'Please enter both origin and destination.';
+        _error = l10n.journeyEnterBothOriginAndDestination;
       });
       return;
     }
@@ -77,9 +80,11 @@ class _JourneySearchPageState extends State<JourneySearchPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('SL Commuter'),
+        title: Text(l10n.appTitle),
       ),
       body: SafeArea(
         child: Column(
@@ -90,10 +95,10 @@ class _JourneySearchPageState extends State<JourneySearchPage> {
                 children: [
                   TextField(
                     controller: _originController,
-                    decoration: const InputDecoration(
-                      labelText: 'From',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.trip_origin),
+                    decoration: InputDecoration(
+                      labelText: l10n.journeyFrom,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.trip_origin),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -102,10 +107,11 @@ class _JourneySearchPageState extends State<JourneySearchPage> {
                       Expanded(
                         child: TextField(
                           controller: _destinationController,
-                          decoration: const InputDecoration(
-                            labelText: 'To',
-                            border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.location_on_outlined),
+                          decoration: InputDecoration(
+                            labelText: l10n.journeyTo,
+                            border: const OutlineInputBorder(),
+                            prefixIcon:
+                                const Icon(Icons.location_on_outlined),
                           ),
                         ),
                       ),
@@ -113,7 +119,7 @@ class _JourneySearchPageState extends State<JourneySearchPage> {
                       IconButton.filledTonal(
                         onPressed: _swapStations,
                         icon: const Icon(Icons.swap_vert),
-                        tooltip: 'Swap stations',
+                        tooltip: l10n.journeySwapStations,
                       ),
                     ],
                   ),
@@ -123,7 +129,11 @@ class _JourneySearchPageState extends State<JourneySearchPage> {
                     child: FilledButton.icon(
                       onPressed: _loading ? null : _searchJourneys,
                       icon: const Icon(Icons.search),
-                      label: Text(_loading ? 'Searching...' : 'Search journeys'),
+                      label: Text(
+                        _loading
+                            ? l10n.journeySearching
+                            : l10n.journeySearchJourneys,
+                      ),
                     ),
                   ),
                   if (_error != null) ...[
@@ -150,7 +160,8 @@ class _JourneySearchPageState extends State<JourneySearchPage> {
                       : ListView.separated(
                           padding: const EdgeInsets.all(16),
                           itemCount: _journeys.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 12),
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 12),
                           itemBuilder: (context, index) {
                             final journey = _journeys[index];
                             return JourneyCard(
@@ -172,6 +183,8 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -185,12 +198,12 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Search to see upcoming trips',
+              l10n.journeyEmptyTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 6),
-            const Text(
-              'This app includes your commuter lookup logic split into pages, services, models, and widgets.',
+            Text(
+              l10n.journeyEmptyBody,
               textAlign: TextAlign.center,
             ),
           ],

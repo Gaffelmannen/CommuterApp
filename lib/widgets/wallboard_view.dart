@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../config/train_direction_config.dart';
+import '../l10n/app_localizations.dart';
 import '../models/departure_result.dart';
 
 class WallboardView extends StatelessWidget {
@@ -21,8 +22,9 @@ class WallboardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final sortedDepartures = [...departures]..sort(_compareDepartures);
-    final grouped = _buildGroups(sortedDepartures);
+    final grouped = _buildGroups(sortedDepartures, l10n);
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
     final nextConnection = _nextReachableDeparture(
@@ -56,7 +58,7 @@ class WallboardView extends StatelessWidget {
                   ),
                   if (lastUpdated != null)
                     Text(
-                      'Updated ${_formatClock(lastUpdated!)}',
+                      l10n.wallboardUpdated(_formatClock(lastUpdated!)),
                       style: TextStyle(
                         color: Colors.white70,
                         fontSize: isLandscape ? 18 : 16,
@@ -71,10 +73,10 @@ class WallboardView extends StatelessWidget {
             ),
             Expanded(
               child: grouped.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text(
-                        'No departures',
-                        style: TextStyle(
+                        l10n.noDepartures,
+                        style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 28,
                         ),
@@ -120,7 +122,10 @@ class WallboardView extends StatelessWidget {
     return null;
   }
 
-  List<_WallboardGroup> _buildGroups(List<DepartureResult> source) {
+  List<_WallboardGroup> _buildGroups(
+    List<DepartureResult> source,
+    AppLocalizations l10n,
+  ) {
     final north = <DepartureResult>[];
     final south = <DepartureResult>[];
     final other = <DepartureResult>[];
@@ -151,13 +156,15 @@ class WallboardView extends StatelessWidget {
     final groups = <_WallboardGroup>[];
 
     if (north.isNotEmpty) {
-      groups.add(_WallboardGroup(title: 'North / City', departures: north));
+      groups.add(_WallboardGroup(title: l10n.northCityGroup, departures: north));
     }
     if (south.isNotEmpty) {
-      groups.add(_WallboardGroup(title: 'Southbound', departures: south));
+      groups.add(
+        _WallboardGroup(title: l10n.southboundGroup, departures: south),
+      );
     }
     if (other.isNotEmpty) {
-      groups.add(_WallboardGroup(title: 'Other', departures: other));
+      groups.add(_WallboardGroup(title: l10n.otherGroup, departures: other));
     }
 
     return groups;
@@ -231,6 +238,8 @@ class _LeaveBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (departure == null) {
       return Container(
         width: double.infinity,
@@ -241,9 +250,9 @@ class _LeaveBanner extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.redAccent),
         ),
-        child: const Text(
-          'No reachable departures with current walking time',
-          style: TextStyle(
+        child: Text(
+          l10n.noReachableDepartures,
+          style: const TextStyle(
             color: Colors.redAccent,
             fontSize: 20,
             fontWeight: FontWeight.w700,
@@ -269,25 +278,28 @@ class _LeaveBanner extends StatelessWidget {
     late final Color backgroundColor;
 
     if (secondsUntilLeave <= 30) {
-      headline = 'Leave now to make the next connection';
+      headline = l10n.leaveNowToMakeNextConnection;
       accentColor = Colors.redAccent;
       borderColor = Colors.redAccent;
       backgroundColor = Colors.redAccent.withOpacity(0.18);
     } else {
-      headline =
-          'Leave in ${_formatRemainingMinutes(timeUntilLeave)} to make the next connection';
+      headline = l10n.leaveInToMakeNextConnection(
+        _formatRemainingMinutes(l10n, timeUntilLeave),
+      );
       accentColor = const Color(0xFFFFD54F);
       borderColor = const Color(0x66FFD54F);
       backgroundColor = const Color(0x22FFD54F);
     }
 
     final linePrefix =
-        departure!.line.isEmpty ? '' : 'Line ${departure!.line} • ';
+        departure!.line.isEmpty ? '' : l10n.linePrefix(departure!.line);
 
-    final details =
-        'Leave by ${_formatClock(leaveByTime)} • '
-        'Departs ${_formatClock(departureTime)} • '
-        '$linePrefix${departure!.destination}';
+    final details = l10n.leaveByDepartsLineDestination(
+      _formatClock(leaveByTime),
+      _formatClock(departureTime),
+      linePrefix,
+      departure!.destination,
+    );
 
     return Container(
       width: double.infinity,
@@ -331,12 +343,13 @@ class _LeaveBanner extends StatelessWidget {
     return '$h:$m';
   }
 
-  static String _formatRemainingMinutes(Duration duration) {
-    if (duration.inSeconds <= 30) {
-      return 'now';
-    }
+  static String _formatRemainingMinutes(
+    AppLocalizations l10n,
+    Duration duration,
+  ) {
+    if (duration.inSeconds <= 30) return l10n.now.toLowerCase();
     final minutes = (duration.inSeconds / 60).ceil();
-    return '$minutes min';
+    return l10n.minutesShort(minutes.toString());
   }
 }
 
@@ -647,9 +660,10 @@ class _DestinationBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final subtitle = departure.stopPoint.isNotEmpty
         ? departure.stopPoint
-        : departure.transportMode;
+        : _transportLabel(l10n, departure.transportMode);
 
     final destinationFont = _destinationFontSize(
       departure.destination,
@@ -699,9 +713,9 @@ class _DestinationBlock extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(color: Colors.redAccent),
                 ),
-                child: const Text(
-                  'Too late',
-                  style: TextStyle(
+                child: Text(
+                  l10n.tooLate,
+                  style: const TextStyle(
                     color: Colors.redAccent,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -713,6 +727,21 @@ class _DestinationBlock extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  static String _transportLabel(AppLocalizations l10n, String value) {
+    switch (value.trim().toUpperCase()) {
+      case 'BUS':
+        return l10n.bus;
+      case 'TRAM':
+        return l10n.tram;
+      case 'METRO':
+        return l10n.subway;
+      case 'TRAIN':
+        return l10n.train;
+      default:
+        return value;
+    }
   }
 
   double _destinationFontSize(
@@ -755,6 +784,7 @@ class _TimeBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final clockSize = isPrimary
         ? (isLandscape ? 25.0 : 38.0)
         : (isLandscape ? 22.0 : 32.0);
@@ -815,7 +845,7 @@ class _TimeBlock extends StatelessWidget {
                 fit: BoxFit.scaleDown,
                 alignment: Alignment.centerRight,
                 child: Text(
-                  _countdown(comparisonTime!),
+                  _countdown(l10n, comparisonTime!),
                   textAlign: TextAlign.end,
                   style: TextStyle(
                     color:
@@ -838,11 +868,10 @@ class _TimeBlock extends StatelessWidget {
     return '$h:$m';
   }
 
-  static String _countdown(DateTime departureTime) {
+  static String _countdown(AppLocalizations l10n, DateTime departureTime) {
     final diff = departureTime.difference(DateTime.now());
-
-    if (diff.inSeconds <= 30) return 'Now';
-    if (diff.inMinutes < 1) return '<1 min';
-    return '${diff.inMinutes} min';
+    if (diff.inSeconds <= 30) return l10n.now;
+    if (diff.inMinutes < 1) return l10n.lessThanOneMinute;
+    return l10n.minutesShort(diff.inMinutes.toString());
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/journey_result.dart';
 
 class JourneyCard extends StatelessWidget {
@@ -14,91 +15,102 @@ class JourneyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    final departure = journey.departureTime;
+    final arrival = journey.arrivalTime;
+    final duration = journey.duration;
+    final line = journey.line;
+    final from = journey.origin;
+    final to = journey.destination;
+    final stops = journey.numberOfStops;
+
     return Card(
+      elevation: 2,
       child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(18),
+        child: Row(
           children: [
-            Text(
-              'Journey #$index',
-              style: Theme.of(context).textTheme.titleMedium,
+            // LEFT: Line badge
+            Container(
+              width: 72,
+              height: 72,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                line.isEmpty ? '?' : line,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
             ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                Chip(
-                  label: Text(
-                    journey.lineNumber.isEmpty ? 'Unknown line' : journey.lineNumber,
+
+            const SizedBox(width: 16),
+
+            // MIDDLE: Journey details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Route
+                  Text(
+                    '$from → $to',
+                    style: Theme.of(context).textTheme.titleMedium,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
+
+                  const SizedBox(height: 6),
+
+                  // Stops
+                  Text(
+                    l10n.journeyStops(stops.toString()),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  // Duration
+                  Text(
+                    l10n.journeyDuration(duration),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(width: 12),
+
+            // RIGHT: Time block
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  _formatTime(departure),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
-                Chip(label: Text('Stops: ${journey.numberOfStops}')),
-                Chip(label: Text('Duration: ${journey.durationLabel}')),
+                const SizedBox(height: 4),
+                Text(
+                  _formatTime(arrival),
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
               ],
-            ),
-            const SizedBox(height: 12),
-            _TimeRow(
-              station: journey.departureName,
-              planned: journey.departurePlanned,
-              estimated: journey.departureEstimated,
-              icon: Icons.login,
-            ),
-            const SizedBox(height: 8),
-            _TimeRow(
-              station: journey.arrivalName,
-              planned: journey.arrivalPlanned,
-              estimated: journey.arrivalEstimated,
-              icon: Icons.logout,
             ),
           ],
         ),
       ),
     );
   }
-}
 
-class _TimeRow extends StatelessWidget {
-  const _TimeRow({
-    required this.station,
-    required this.planned,
-    required this.estimated,
-    required this.icon,
-  });
-
-  final String station;
-  final String planned;
-  final String estimated;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final delayed = planned != estimated;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                station,
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                delayed
-                    ? 'Planned: $planned   Estimated: $estimated'
-                    : 'Time: $planned',
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
+  static String _formatTime(DateTime? dt) {
+    if (dt == null) return '--:--';
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '$h:$m';
   }
 }

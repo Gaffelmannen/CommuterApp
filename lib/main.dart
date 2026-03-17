@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'l10n/app_localizations.dart';
 import 'models/site_result.dart';
 import 'models/wallboard_filters.dart';
 import 'pages/departure_board_page.dart';
@@ -13,20 +14,31 @@ void main() {
   runApp(const CommuterApp());
 }
 
-class CommuterApp extends StatelessWidget {
+class CommuterApp extends StatefulWidget {
   const CommuterApp({super.key});
+
+  @override
+  State<CommuterApp> createState() => _CommuterAppState();
+}
+
+class _CommuterAppState extends State<CommuterApp> {
+  Locale? _locale;
+
+  void _setLocale(Locale locale) {
+    setState(() {
+      _locale = locale;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'SL Commuter',
       debugShowCheckedModeBanner: false,
-      locale: const Locale('sv', 'SE'),
-      supportedLocales: const [
-        Locale('sv', 'SE'),
-        Locale('en', 'US'),
-      ],
+      locale: _locale,
+      supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const [
+        AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
@@ -39,41 +51,16 @@ class CommuterApp extends StatelessWidget {
         useMaterial3: true,
         brightness: Brightness.dark,
         scaffoldBackgroundColor: const Color(0xFF050505),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF050505),
-          foregroundColor: Colors.white,
-          elevation: 0,
-        ),
-        cardTheme: CardThemeData(
-          color: const Color(0xFF111111),
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-            side: const BorderSide(color: Color(0x22FFFFFF)),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: const Color(0xFF101010),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-        ),
-        navigationBarTheme: const NavigationBarThemeData(
-          backgroundColor: Color(0xFF0B0B0B),
-          indicatorColor: Color(0x33FFD54F),
-          labelTextStyle: WidgetStatePropertyAll(
-            TextStyle(fontWeight: FontWeight.w600),
-          ),
-        ),
       ),
-      home: const AppStartupPage(),
+      home: AppStartupPage(onChangeLocale: _setLocale),
     );
   }
 }
 
 class AppStartupPage extends StatefulWidget {
-  const AppStartupPage({super.key});
+  const AppStartupPage({super.key, required this.onChangeLocale});
+
+  final void Function(Locale) onChangeLocale;
 
   @override
   State<AppStartupPage> createState() => _AppStartupPageState();
@@ -89,14 +76,18 @@ class _AppStartupPageState extends State<AppStartupPage> {
   }
 
   Future<void> _bootstrap() async {
-    final launchWallboard = await WallboardSettings.getLaunchWallboardOnStart();
+    final launchWallboard =
+        await WallboardSettings.getLaunchWallboardOnStart();
     final saved = await WallboardSettings.getDefaultStation();
 
     if (!mounted) return;
 
-    if (launchWallboard && saved.siteId != null && saved.siteName != null) {
+    if (launchWallboard &&
+        saved.siteId != null &&
+        saved.siteName != null) {
       try {
-        final departures = await _service.getDepartures(siteId: saved.siteId!);
+        final departures =
+            await _service.getDepartures(siteId: saved.siteId!);
 
         if (!mounted) return;
 
@@ -118,32 +109,43 @@ class _AppStartupPageState extends State<AppStartupPage> {
           ),
         );
         return;
-      } catch (_) {
-        // Fall back to the normal app if wallboard startup fails.
-      }
+      } catch (_) {}
     }
 
     if (!mounted) return;
 
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => const RootPage(),
+        builder: (_) => RootPage(
+          onChangeLocale: widget.onChangeLocale,
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    final l10n = AppLocalizations.of(context);
+
+    return Scaffold(
       body: Center(
-        child: CircularProgressIndicator(),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 12),
+            if (l10n != null) Text(l10n.startupLoading),
+          ],
+        ),
       ),
     );
   }
 }
 
 class RootPage extends StatefulWidget {
-  const RootPage({super.key});
+  const RootPage({super.key, required this.onChangeLocale});
+
+  final void Function(Locale) onChangeLocale;
 
   @override
   State<RootPage> createState() => _RootPageState();
@@ -159,7 +161,28 @@ class _RootPageState extends State<RootPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.appTitle),
+        actions: [
+          PopupMenuButton<Locale>(
+            icon: const Icon(Icons.language),
+            onSelected: widget.onChangeLocale,
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: Locale('en'),
+                child: Text('English'),
+              ),
+              PopupMenuItem(
+                value: Locale('sv'),
+                child: Text('Svenska'),
+              ),
+            ],
+          ),
+        ],
+      ),
       body: _pages[_index],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
@@ -168,16 +191,16 @@ class _RootPageState extends State<RootPage> {
             _index = value;
           });
         },
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.route_outlined),
-            selectedIcon: Icon(Icons.route),
-            label: 'Trips',
+            icon: const Icon(Icons.route_outlined),
+            selectedIcon: const Icon(Icons.route),
+            label: l10n.tripsTab,
           ),
           NavigationDestination(
-            icon: Icon(Icons.departure_board_outlined),
-            selectedIcon: Icon(Icons.departure_board),
-            label: 'Board',
+            icon: const Icon(Icons.departure_board_outlined),
+            selectedIcon: const Icon(Icons.departure_board),
+            label: l10n.boardTab,
           ),
         ],
       ),

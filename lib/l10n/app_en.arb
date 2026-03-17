@@ -1,0 +1,126 @@
+{
+  "@@locale": "en",
+  "appTitle": "SL Commuter",
+  "tripsTab": "Trips",
+  "boardTab": "Board",
+  "startupLoading": "Loading...",
+  "departureBoardTitle": "Departure Board",
+  "station": "Station",
+  "searchStationHint": "Search station, e.g. Stuvsta",
+  "selectedStation": "Selected: {station}",
+  "@selectedStation": {
+    "placeholders": {
+      "station": {}
+    }
+  },
+  "refresh": "Refresh",
+  "openWallboard": "Open wallboard",
+  "setAsWallboardDefault": "Set as wallboard default",
+  "savedAsDefault": "Saved as default",
+  "clearDefault": "Clear default",
+  "launchWallboardOnStart": "Launch wallboard on app start",
+  "launchWallboardOnStartSubtitle": "Uses the saved default wallboard station",
+  "filterByDestination": "Filter by destination",
+  "filterByDestinationHint": "e.g. Stockholm City",
+  "filterByRoute": "Filter by route #",
+  "filterByRouteHint": "e.g. 40 or 41",
+  "bus": "Bus",
+  "tram": "Tram",
+  "subway": "Subway",
+  "train": "Train",
+  "allTrains": "All trains",
+  "northCity": "North / City",
+  "southbound": "Southbound",
+  "showingDepartures": "Showing {filtered} of {total} departures",
+  "@showingDepartures": {
+    "placeholders": {
+      "filtered": {},
+      "total": {}
+    }
+  },
+  "noStationsMatch": "No stations match \"{query}\"",
+  "@noStationsMatch": {
+    "placeholders": {
+      "query": {}
+    }
+  },
+  "siteId": "Site ID: {id}",
+  "@siteId": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "searchForStationToOpenBoard": "Search for a station to open its departure board",
+  "noDeparturesFound": "No departures found for this station",
+  "noDeparturesMatchFilters": "No departures match the current filters",
+  "wallboardUpdated": "Updated {time}",
+  "@wallboardUpdated": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "northCityGroup": "North / City",
+  "southboundGroup": "Southbound",
+  "otherGroup": "Other",
+  "noDepartures": "No departures",
+  "leaveNowToMakeNextConnection": "Leave now to make the next connection",
+  "leaveInToMakeNextConnection": "Leave in {minutes} to make the next connection",
+  "@leaveInToMakeNextConnection": {
+    "placeholders": {
+      "minutes": {}
+    }
+  },
+  "noReachableDepartures": "No reachable departures with current walking time",
+  "leaveByDepartsLineDestination": "Leave by {leaveBy} • Departs {departs} • {linePrefix}{destination}",
+  "@leaveByDepartsLineDestination": {
+    "placeholders": {
+      "leaveBy": {},
+      "departs": {},
+      "linePrefix": {},
+      "destination": {}
+    }
+  },
+  "linePrefix": "Line {line} • ",
+  "@linePrefix": {
+    "placeholders": {
+      "line": {}
+    }
+  },
+  "kioskModeActive": "Kiosk mode active",
+  "tooLate": "Too late",
+  "now": "Now",
+  "lessThanOneMinute": "<1 min",
+  "minutesShort": "{minutes} min",
+  "@minutesShort": {
+    "placeholders": {
+      "minutes": {}
+    }
+  },
+  "wallboardDefaultSavedMessage": "{station} saved as wallboard default",
+  "@wallboardDefaultSavedMessage": {
+    "placeholders": {
+      "station": {}
+    }
+  },
+  "wallboardDefaultClearedMessage": "Wallboard default cleared",
+  "journeyFrom": "From",
+  "journeyTo": "To",
+  "journeySwapStations": "Swap stations",
+  "journeySearching": "Searching...",
+  "journeySearchJourneys": "Search journeys",
+  "journeyEnterBothOriginAndDestination": "Please enter both origin and destination.",
+  "journeyEmptyTitle": "Search to see upcoming trips",
+  "journeyEmptyBody": "This app includes your commuter lookup logic split into pages, services, models, and widgets.",
+  "journeyStops": "{count} stops",
+  "journeyDuration": "Duration: {duration}",
+  "@journeyStops": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "@journeyDuration": {
+    "placeholders": {
+      "duration": {}
+    }
+  }
+}

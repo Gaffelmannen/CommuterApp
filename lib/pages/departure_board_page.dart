@@ -3,13 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../config/train_direction_config.dart';
+import '../l10n/app_localizations.dart';
 import '../models/departure_result.dart';
 import '../models/site_result.dart';
+import '../models/wallboard_filters.dart';
 import '../services/sl_departure_board_service.dart';
 import '../settings/app_settings.dart';
 import '../settings/wallboard_settings.dart';
 import 'wallboard_page.dart';
-import '../models/wallboard_filters.dart';
 
 enum _TrainDirection {
   northbound,
@@ -50,13 +51,6 @@ class _DepartureBoardPageState extends State<DepartureBoardPage> {
 
   bool _launchWallboardOnStart = false;
   int? _defaultWallboardSiteId;
-
-  static const Map<String, String> _modeLabels = {
-    'BUS': 'Bus',
-    'TRAM': 'Tram',
-    'METRO': 'Subway',
-    'TRAIN': 'Train',
-  };
 
   @override
   void initState() {
@@ -239,8 +233,9 @@ class _DepartureBoardPageState extends State<DepartureBoardPage> {
       _defaultWallboardSiteId = site.id;
     });
 
+    final l10n = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${site.name} saved as wallboard default')),
+      SnackBar(content: Text(l10n.wallboardDefaultSavedMessage(site.name))),
     );
   }
 
@@ -258,8 +253,9 @@ class _DepartureBoardPageState extends State<DepartureBoardPage> {
 
     if (!mounted) return;
 
+    final l10n = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Wallboard default cleared')),
+      SnackBar(content: Text(l10n.wallboardDefaultClearedMessage)),
     );
   }
 
@@ -456,42 +452,61 @@ class _DepartureBoardPageState extends State<DepartureBoardPage> {
     return _TrainDirection.unknown;
   }
 
-  String _trainDirectionLabel(TrainDirectionFilter filter) {
+  String _trainDirectionLabel(
+    AppLocalizations l10n,
+    TrainDirectionFilter filter,
+  ) {
     switch (filter) {
       case TrainDirectionFilter.all:
-        return 'All trains';
+        return l10n.allTrains;
       case TrainDirectionFilter.northbound:
-        return 'North / City';
+        return l10n.northCity;
       case TrainDirectionFilter.southbound:
-        return 'Southbound';
+        return l10n.southbound;
+    }
+  }
+
+  String _modeLabel(AppLocalizations l10n, String mode) {
+    switch (mode) {
+      case 'BUS':
+        return l10n.bus;
+      case 'TRAM':
+        return l10n.tram;
+      case 'METRO':
+        return l10n.subway;
+      case 'TRAIN':
+        return l10n.train;
+      default:
+        return mode;
     }
   }
 
   Future<void> _openWallboard() async {
-  final site = _selectedSite;
-  if (site == null) return;
+    final site = _selectedSite;
+    if (site == null) return;
 
-  final filters = WallboardFilters(
-    destinationFilter: _destinationFilterController.text,
-    routeFilter: _routeFilterController.text,
-    selectedModes: Set<String>.from(_selectedModes),
-    trainDirectionFilter: _trainDirectionFilter,
-  );
+    final filters = WallboardFilters(
+      destinationFilter: _destinationFilterController.text,
+      routeFilter: _routeFilterController.text,
+      selectedModes: Set<String>.from(_selectedModes),
+      trainDirectionFilter: _trainDirectionFilter,
+    );
 
-  await Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (_) => WallboardPage(
-        site: site,
-        initialDepartures:
-            _filteredDepartures.take(AppSettings.wallboardMaxItems).toList(),
-        filters: filters,
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => WallboardPage(
+          site: site,
+          initialDepartures:
+              _filteredDepartures.take(AppSettings.wallboardMaxItems).toList(),
+          filters: filters,
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final filteredDepartures = _filteredDepartures;
     final visibleSites = _visibleSites;
     final showSuggestions =
@@ -501,11 +516,11 @@ class _DepartureBoardPageState extends State<DepartureBoardPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Departure Board'),
+        title: Text(l10n.departureBoardTitle),
         actions: [
           if (_selectedSite != null)
             IconButton(
-              tooltip: 'Open wallboard',
+              tooltip: l10n.openWallboard,
               onPressed: _openWallboard,
               icon: const Icon(Icons.fullscreen),
             ),
@@ -524,8 +539,8 @@ class _DepartureBoardPageState extends State<DepartureBoardPage> {
                   textCapitalization: TextCapitalization.words,
                   autocorrect: false,
                   decoration: InputDecoration(
-                    labelText: 'Station',
-                    hintText: 'Search station, e.g. Stuvsta',
+                    labelText: l10n.station,
+                    hintText: l10n.searchStationHint,
                     prefixIcon: const Icon(Icons.departure_board),
                     suffixIcon: _searchingSites
                         ? const Padding(
@@ -555,28 +570,28 @@ class _DepartureBoardPageState extends State<DepartureBoardPage> {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(
-                          'Selected: ${_selectedSite!.name}',
+                          l10n.selectedStation(_selectedSite!.name),
                           style: Theme.of(context).textTheme.titleSmall,
                         ),
                         ActionChip(
-                          label: const Text('Refresh'),
+                          label: Text(l10n.refresh),
                           onPressed: () => _loadDepartures(_selectedSite!),
                         ),
                         ActionChip(
                           label: Text(
                             selectedIsDefault
-                                ? 'Saved as default'
-                                : 'Set as wallboard default',
+                                ? l10n.savedAsDefault
+                                : l10n.setAsWallboardDefault,
                           ),
                           onPressed: _saveCurrentAsDefault,
                         ),
                         ActionChip(
-                          label: const Text('Open wallboard'),
+                          label: Text(l10n.openWallboard),
                           onPressed: _openWallboard,
                         ),
                         if (_defaultWallboardSiteId != null)
                           ActionChip(
-                            label: const Text('Clear default'),
+                            label: Text(l10n.clearDefault),
                             onPressed: _clearDefaultWallboard,
                           ),
                       ],
@@ -586,10 +601,8 @@ class _DepartureBoardPageState extends State<DepartureBoardPage> {
                   const SizedBox(height: 12),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('Launch wallboard on app start'),
-                    subtitle: const Text(
-                      'Uses the saved default wallboard station',
-                    ),
+                    title: Text(l10n.launchWallboardOnStart),
+                    subtitle: Text(l10n.launchWallboardOnStartSubtitle),
                     value: _launchWallboardOnStart,
                     onChanged: _defaultWallboardSiteId == null
                         ? null
@@ -601,11 +614,11 @@ class _DepartureBoardPageState extends State<DepartureBoardPage> {
                         child: TextField(
                           controller: _destinationFilterController,
                           onChanged: (_) => setState(() {}),
-                          decoration: const InputDecoration(
-                            labelText: 'Filter by destination',
-                            hintText: 'e.g. Stockholm City',
-                            prefixIcon: Icon(Icons.place_outlined),
-                            border: OutlineInputBorder(),
+                          decoration: InputDecoration(
+                            labelText: l10n.filterByDestination,
+                            hintText: l10n.filterByDestinationHint,
+                            prefixIcon: const Icon(Icons.place_outlined),
+                            border: const OutlineInputBorder(),
                           ),
                         ),
                       ),
@@ -614,12 +627,12 @@ class _DepartureBoardPageState extends State<DepartureBoardPage> {
                         child: TextField(
                           controller: _routeFilterController,
                           onChanged: (_) => setState(() {}),
-                          decoration: const InputDecoration(
-                            labelText: 'Filter by route #',
-                            hintText: 'e.g. 40 or 41',
+                          decoration: InputDecoration(
+                            labelText: l10n.filterByRoute,
+                            hintText: l10n.filterByRouteHint,
                             prefixIcon:
-                                Icon(Icons.confirmation_number_outlined),
-                            border: OutlineInputBorder(),
+                                const Icon(Icons.confirmation_number_outlined),
+                            border: const OutlineInputBorder(),
                           ),
                         ),
                       ),
@@ -631,12 +644,11 @@ class _DepartureBoardPageState extends State<DepartureBoardPage> {
                     child: Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: _modeLabels.entries.map((entry) {
-                        final mode = entry.key;
+                      children: ['BUS', 'TRAM', 'METRO', 'TRAIN'].map((mode) {
                         final selected = _selectedModes.contains(mode);
 
                         return FilterChip(
-                          label: Text(entry.value),
+                          label: Text(_modeLabel(l10n, mode)),
                           selected: selected,
                           onSelected: (_) => _toggleMode(mode),
                         );
@@ -652,7 +664,7 @@ class _DepartureBoardPageState extends State<DepartureBoardPage> {
                         runSpacing: 8,
                         children: TrainDirectionFilter.values.map((filter) {
                           return ChoiceChip(
-                            label: Text(_trainDirectionLabel(filter)),
+                            label: Text(_trainDirectionLabel(l10n, filter)),
                             selected: _trainDirectionFilter == filter,
                             onSelected: (_) {
                               setState(() {
@@ -670,7 +682,10 @@ class _DepartureBoardPageState extends State<DepartureBoardPage> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Showing ${filteredDepartures.length} of ${_departures.length} departures',
+                      l10n.showingDepartures(
+                        filteredDepartures.length.toString(),
+                        _departures.length.toString(),
+                      ),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ),
@@ -692,22 +707,24 @@ class _DepartureBoardPageState extends State<DepartureBoardPage> {
           ),
           Expanded(
             child: showSuggestions
-                ? _buildSuggestions(visibleSites)
-                : _buildBoard(filteredDepartures),
+                ? _buildSuggestions(context, visibleSites)
+                : _buildBoard(context, filteredDepartures),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSuggestions(List<SiteResult> sites) {
+  Widget _buildSuggestions(BuildContext context, List<SiteResult> sites) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (_searchingSites && sites.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
     if (sites.isEmpty) {
       return Center(
-        child: Text('No stations match "${_stationQuery.trim()}"'),
+        child: Text(l10n.noStationsMatch(_stationQuery.trim())),
       );
     }
 
@@ -721,7 +738,7 @@ class _DepartureBoardPageState extends State<DepartureBoardPage> {
           return ListTile(
             leading: const Icon(Icons.location_on_outlined),
             title: Text(site.name),
-            subtitle: Text('Site ID: ${site.id}'),
+            subtitle: Text(l10n.siteId(site.id.toString())),
             onTap: () => _selectSite(site),
           );
         },
@@ -729,10 +746,12 @@ class _DepartureBoardPageState extends State<DepartureBoardPage> {
     );
   }
 
-  Widget _buildBoard(List<DepartureResult> departures) {
+  Widget _buildBoard(BuildContext context, List<DepartureResult> departures) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (_selectedSite == null) {
-      return const Center(
-        child: Text('Search for a station to open its departure board'),
+      return Center(
+        child: Text(l10n.searchForStationToOpenBoard),
       );
     }
 
@@ -741,14 +760,14 @@ class _DepartureBoardPageState extends State<DepartureBoardPage> {
     }
 
     if (_departures.isEmpty) {
-      return const Center(
-        child: Text('No departures found for this station'),
+      return Center(
+        child: Text(l10n.noDeparturesFound),
       );
     }
 
     if (departures.isEmpty) {
-      return const Center(
-        child: Text('No departures match the current filters'),
+      return Center(
+        child: Text(l10n.noDeparturesMatchFilters),
       );
     }
 
@@ -783,6 +802,7 @@ class _CompactDepartureCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final planned = departure.scheduledTime;
     final estimated = departure.expectedTime;
     final comparisonTime = estimated ?? planned;
@@ -822,7 +842,7 @@ class _CompactDepartureCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    departure.transportMode,
+                    _transportLabel(l10n, departure.transportMode),
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   if (departure.stopPoint.isNotEmpty) ...[
@@ -858,7 +878,7 @@ class _CompactDepartureCard extends StatelessWidget {
                 if (comparisonTime != null) ...[
                   const SizedBox(height: 4),
                   Text(
-                    _formatCountdown(comparisonTime),
+                    _formatCountdown(l10n, comparisonTime),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                           color: delayed ? scheme.error : null,
@@ -873,16 +893,31 @@ class _CompactDepartureCard extends StatelessWidget {
     );
   }
 
+  static String _transportLabel(AppLocalizations l10n, String value) {
+    switch (value.trim().toUpperCase()) {
+      case 'BUS':
+        return l10n.bus;
+      case 'TRAM':
+        return l10n.tram;
+      case 'METRO':
+        return l10n.subway;
+      case 'TRAIN':
+        return l10n.train;
+      default:
+        return value;
+    }
+  }
+
   static String _formatClock(DateTime dt) {
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
     return '$h:$m';
   }
 
-  static String _formatCountdown(DateTime departureTime) {
+  static String _formatCountdown(AppLocalizations l10n, DateTime departureTime) {
     final diff = departureTime.difference(DateTime.now());
-    if (diff.inSeconds <= 30) return 'Now';
-    if (diff.inMinutes < 1) return '<1 min';
-    return '${diff.inMinutes} min';
+    if (diff.inSeconds <= 30) return l10n.now;
+    if (diff.inMinutes < 1) return l10n.lessThanOneMinute;
+    return l10n.minutesShort(diff.inMinutes.toString());
   }
 }

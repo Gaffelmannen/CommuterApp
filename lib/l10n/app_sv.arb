@@ -1,0 +1,126 @@
+{
+  "@@locale": "sv",
+  "appTitle": "SL Commuter",
+  "tripsTab": "Resor",
+  "boardTab": "Tavla",
+  "startupLoading": "Laddar...",
+  "departureBoardTitle": "Avgångstavla",
+  "station": "Station",
+  "searchStationHint": "Sök station, t.ex. Stuvsta",
+  "selectedStation": "Vald: {station}",
+  "@selectedStation": {
+    "placeholders": {
+      "station": {}
+    }
+  },
+  "refresh": "Uppdatera",
+  "openWallboard": "Öppna väggtavla",
+  "setAsWallboardDefault": "Spara som standard för väggtavla",
+  "savedAsDefault": "Sparad som standard",
+  "clearDefault": "Rensa standard",
+  "launchWallboardOnStart": "Starta väggtavlan vid appstart",
+  "launchWallboardOnStartSubtitle": "Använder den sparade standardstationen",
+  "filterByDestination": "Filtrera på destination",
+  "filterByDestinationHint": "t.ex. Stockholm City",
+  "filterByRoute": "Filtrera på linje #",
+  "filterByRouteHint": "t.ex. 40 eller 41",
+  "bus": "Buss",
+  "tram": "Spårvagn",
+  "subway": "Tunnelbana",
+  "train": "Tåg",
+  "allTrains": "Alla tåg",
+  "northCity": "Norr / City",
+  "southbound": "Söderut",
+  "showingDepartures": "Visar {filtered} av {total} avgångar",
+  "@showingDepartures": {
+    "placeholders": {
+      "filtered": {},
+      "total": {}
+    }
+  },
+  "noStationsMatch": "Inga stationer matchar \"{query}\"",
+  "@noStationsMatch": {
+    "placeholders": {
+      "query": {}
+    }
+  },
+  "siteId": "Plats-ID: {id}",
+  "@siteId": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "searchForStationToOpenBoard": "Sök efter en station för att öppna avgångstavlan",
+  "noDeparturesFound": "Inga avgångar hittades för den här stationen",
+  "noDeparturesMatchFilters": "Inga avgångar matchar nuvarande filter",
+  "wallboardUpdated": "Uppdaterad {time}",
+  "@wallboardUpdated": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "northCityGroup": "Norr / City",
+  "southboundGroup": "Söderut",
+  "otherGroup": "Övrigt",
+  "noDepartures": "Inga avgångar",
+  "leaveNowToMakeNextConnection": "Gå nu för att hinna nästa anslutning",
+  "leaveInToMakeNextConnection": "Gå om {minutes} för att hinna nästa anslutning",
+  "@leaveInToMakeNextConnection": {
+    "placeholders": {
+      "minutes": {}
+    }
+  },
+  "noReachableDepartures": "Inga avgångar går att nå med nuvarande gångtid",
+  "leaveByDepartsLineDestination": "Gå senast {leaveBy} • Avgår {departs} • {linePrefix}{destination}",
+  "@leaveByDepartsLineDestination": {
+    "placeholders": {
+      "leaveBy": {},
+      "departs": {},
+      "linePrefix": {},
+      "destination": {}
+    }
+  },
+  "linePrefix": "Linje {line} • ",
+  "@linePrefix": {
+    "placeholders": {
+      "line": {}
+    }
+  },
+  "kioskModeActive": "Kioskläge aktivt",
+  "tooLate": "För sent",
+  "now": "Nu",
+  "lessThanOneMinute": "<1 min",
+  "minutesShort": "{minutes} min",
+  "@minutesShort": {
+    "placeholders": {
+      "minutes": {}
+    }
+  },
+  "wallboardDefaultSavedMessage": "{station} sparad som standard för väggtavlan",
+  "@wallboardDefaultSavedMessage": {
+    "placeholders": {
+      "station": {}
+    }
+  },
+  "wallboardDefaultClearedMessage": "Standard för väggtavla rensad",
+  "journeyFrom": "Från",
+  "journeyTo": "Till",
+  "journeySwapStations": "Byt stationer",
+  "journeySearching": "Söker...",
+  "journeySearchJourneys": "Sök resor",
+  "journeyEnterBothOriginAndDestination": "Ange både start och destination.",
+  "journeyEmptyTitle": "Sök för att se kommande resor",
+  "journeyEmptyBody": "Appen innehåller din pendlingslogik uppdelad i sidor, tjänster, modeller och widgets.",
+  "journeyStops": "{count} stopp",
+  "journeyDuration": "Restid: {duration}",
+  "@journeyStops": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "@journeyDuration": {
+    "placeholders": {
+      "duration": {}
+    }
+  }
+}
