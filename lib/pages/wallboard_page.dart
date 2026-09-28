@@ -36,6 +36,7 @@ class _WallboardPageState extends State<WallboardPage> {
   Timer? _controlsTimer;
 
   late List<DepartureResult> _departures;
+  late List<DepartureResult> _allDepartures;
   DateTime? _lastUpdated;
 
   bool _fullscreen = AppSettings.wallboardStartInFullscreen;
@@ -51,7 +52,8 @@ class _WallboardPageState extends State<WallboardPage> {
   void initState() {
     super.initState();
 
-    _departures = _applyFilters(widget.initialDepartures);
+    _allDepartures = _applyFilters(widget.initialDepartures);
+    _departures = _allDepartures.take(AppSettings.wallboardMaxItems).toList();
     _lastUpdated = DateTime.now();
 
     _applyDisplayMode();
@@ -168,6 +170,7 @@ class _WallboardPageState extends State<WallboardPage> {
       if (!mounted) return;
 
       setState(() {
+        _allDepartures = filtered;
         _departures = filtered.take(AppSettings.wallboardMaxItems).toList();
         _lastUpdated = DateTime.now();
       });
@@ -342,6 +345,7 @@ class _WallboardPageState extends State<WallboardPage> {
                 child: WallboardView(
                   stationName: widget.site.name,
                   departures: visibleDepartures,
+                  allDepartures: _allDepartures,
                   lastUpdated: _lastUpdated,
                   showLeaveBanner: _kioskMode,
                   walkMinutes: AppSettings.wallboardWalkMinutes,

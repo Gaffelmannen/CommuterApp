@@ -9,6 +9,7 @@ class WallboardView extends StatelessWidget {
     super.key,
     required this.stationName,
     required this.departures,
+    required this.allDepartures,
     required this.lastUpdated,
     required this.showLeaveBanner,
     required this.walkMinutes,
@@ -16,6 +17,13 @@ class WallboardView extends StatelessWidget {
 
   final String stationName;
   final List<DepartureResult> departures;
+
+  /// The full, unfiltered-by-display-count departure board, used to look
+  /// for the next reachable connection. [departures] is only the handful of
+  /// rows actually rendered (capped by [AppSettings.wallboardMaxItems]), so
+  /// searching for reachability within it alone can miss a later departure
+  /// that would still be reachable but didn't make the visible cut.
+  final List<DepartureResult> allDepartures;
   final DateTime? lastUpdated;
   final bool showLeaveBanner;
   final int walkMinutes;
@@ -27,8 +35,9 @@ class WallboardView extends StatelessWidget {
     final grouped = _buildGroups(sortedDepartures, l10n);
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
+    final sortedAllDepartures = [...allDepartures]..sort(_compareDepartures);
     final nextConnection = _nextReachableDeparture(
-      sortedDepartures,
+      sortedAllDepartures,
       walkMinutes,
     );
 

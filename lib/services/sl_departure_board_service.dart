@@ -143,10 +143,57 @@ class SlDepartureBoardService {
   DateTime? _parseDateTime(String? value) {
     if (value == null || value.isEmpty) return null;
     try {
-      return DateTime.parse(value).toLocal();
+      // The SL departures API returns naive Europe/Stockholm wall-clock
+      // timestamps with no UTC offset (e.g. "2026-09-28T08:47:00"). Plain
+      // DateTime.parse(...).toLocal() just tags those field values as the
+      // *device's* local time, which is only correct when the device
+      // itself happens to be set to Europe/Stockholm. On a device in any
+      // other timezone (e.g. a misconfigured kiosk/wallboard tablet) every
+      // comparison against DateTime.now() is silently wrong, which is what
+      // produces bogus "no reachable departures" results. Convert
+      // explicitly from Stockholm time instead.
+      final naive = DateTime.parse(value);
+      return _stockholmWallClockToUtc(naive).toLocal();
     } catch (_) {
       return null;
     }
+  }
+
+  DateTime _stockholmWallClockToUtc(DateTime wallClock) {
+    final utcGuess = DateTime.utc(
+      wallClock.year,
+      wallClock.month,
+      wallClock.day,
+      wallClock.hour,
+      wallClock.minute,
+      wallClock.second,
+      wallClock.millisecond,
+      wallClock.microsecond,
+    );
+    final offsetHours = _isSwedishSummerTime(utcGuess) ? 2 : 1;
+    return utcGuess.subtract(Duration(hours: offsetHours));
+  }
+
+  /// Sweden follows the EU-wide daylight saving rule: clocks go forward one
+  /// hour at 01:00 UTC on the last Sunday of March, and back at 01:00 UTC
+  /// on the last Sunday of October.
+  bool _isSwedishSummerTime(DateTime utc) {
+    DateTime lastSundayOfMonthAt1Utc(int month) {
+      final firstOfNextMonth = DateTime.utc(
+        month == 12 ? utc.year + 1 : utc.year,
+        month == 12 ? 1 : month + 1,
+        1,
+      );
+      final lastDayOfMonth = firstOfNextMonth.subtract(const Duration(days: 1));
+      final daysAfterSunday = lastDayOfMonth.weekday % 7;
+      final lastSunday = lastDayOfMonth.subtract(Duration(days: daysAfterSunday));
+      return DateTime.utc(lastSunday.year, lastSunday.month, lastSunday.day, 1);
+    }
+
+    final dstStart = lastSundayOfMonthAt1Utc(3);
+    final dstEnd = lastSundayOfMonthAt1Utc(10);
+
+    return !utc.isBefore(dstStart) && utc.isBefore(dstEnd);
   }
 
   String _normalizeForSearch(String input) {
